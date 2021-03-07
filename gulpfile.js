@@ -1,7 +1,9 @@
 'use strict';
 
-var gulp = require('gulp'),
-    watch = require('gulp-watch'),
+const gulp = require('gulp'),
+    { series, parallel } = gulp,
+    babel = require('gulp-babel'),
+    // watch = require('gulp-watch'),
     prefixer = require('gulp-autoprefixer'),
     uglify = require('gulp-uglify'),
     sass = require('gulp-sass'),
@@ -17,11 +19,11 @@ var gulp = require('gulp'),
     imageresize = require('gulp-image-resize');
 
 
-var path = {
+const path = {
     build: { // пути для файлов после сборки
         html: 'build/',
         js: 'build/js/',
-        css: 'build/css/',
+        style: 'build/css/',
         img: 'build/img/',
         fonts: 'build/fonts/'
     },
@@ -43,48 +45,84 @@ var path = {
 }
 
 
-// конфиг сервера
-var config = {
-    server: {
-        baseDir: "./build"
-    },
-    tunnel: true,
-    host: 'localhost',
-    port: 9000,
-    logPrefix: "frontend"
-};
+// dev task
+const server = () => {
+    return browserSync
+        .init({
+            server: {
+                baseDir: "./build"
+            },
+            host: 'localhost',
+            port: 9000,
+            logPrefix: "frontend"
+        });
+}
 
-// собираем HTML
-gulp.task('html:build', function () {
-    gulp.src(path.src.html) //Выберем файлы по нужному пути
-        .pipe(rigger()) //Прогоним через rigger
-        .pipe(gulp.dest(path.build.html)) //Выплюнем их в папку build
-        .pipe(reload({ stream: true })); //И перезагрузим наш сервер для обновлений
-});
+const html = () => {
+    return gulp
+        .src(path.src.html)
+        .pipe(rigger())
+        .pipe(gulp.dest('build'))
+        .pipe(gulp.dest(path.build.html))
+        .pipe(reload({ stream: true }));
+}
 
+const styles = () => {
+    return gulp
+        .src(path.src.style)
+        .pipe(sass())
+        .pipe(gulp.dest(path.build.style))
+        .pipe(reload({ stream: true }));
+}
 
-gulp.task('webp', () =>
-    gulp.src('src/images/**/*.*')
-        .pipe(webp({ quality: 80, preset: 'photo' }))
-        .pipe(gulp.dest('./build/images/'))
-);
-
-gulp.task('imagemin', () =>
-    gulp.src('src/images/**/*.*')
-        .pipe(imagemin({
-            quality: 80,
-            optimizationLevel: 6
+const scripts = () => {
+    return gulp.src(path.src.js)
+        .pipe(babel({
+            presets: ['@babel/env']
         }))
-        .pipe(gulp.dest('./build/images/'))
-);
+        // .pipe(uglify())
+        // .pipe(concat('main.min.js'))
+        .pipe(gulp.dest(path.build.js))
+        .pipe(reload({ stream: true }));
+}
 
-gulp.task('imageresize', () =>
-    gulp.src('src/images/**/*.*')
-        .pipe(imageresize({
-            width: 768,
-            height: 432,
-            crop : false,
-            upscale : false
-        }))
-        .pipe(gulp.dest('./build/images/'))
-);
+const watch = () => {
+    gulp.watch(path.watch.html, html)
+    gulp.watch(path.watch.style, styles)
+    gulp.watch(path.watch.js, scripts)
+}
+
+// dev task
+exports.dev = series(
+    parallel(html, styles, scripts),
+    parallel(watch, server)
+)
+
+
+
+
+// gulp.task('webp', () =>
+//     gulp.src('src/images/**/*.*')
+//         .pipe(webp({ quality: 80, preset: 'photo' }))
+//         .pipe(gulp.dest('./build/images/'))
+// );
+
+// gulp.task('imagemin', () =>
+//     gulp.src('src/images/**/*.*')
+//         .pipe(imagemin({
+//             quality: 80,
+//             optimizationLevel: 6
+//         }))
+//         .pipe(gulp.dest('./build/images/'))
+// );
+
+// gulp.task('imageresize', () =>
+//     gulp.src('src/images/**/*.*')
+//         .pipe(imageresize({
+//             width: 768,
+//             height: 432,
+//             crop : false,
+//             upscale : false
+//         }))
+//         .pipe(gulp.dest('./build/images/'))
+// );
