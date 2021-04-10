@@ -1,7 +1,7 @@
 {
-  "name": "gulp-study",
+  "name": "gulp-build",
   "version": "1.0.0",
-  "description": "Study Gulp ",
+  "description": "Simole frontend build",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Onepo1ntFive/gulp-study.git"
+    "url": "git+https://github.com/Onepo1ntFive/gulp-build.git"
   },
   "author": "SergeySolvyev",
   "license": "ISC",
@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/Onepo1ntFive/gulp-study#readme",
   "dependencies": {
-    "gulp-babel": "^8.0.0"
+    "gulp-babel": "^8.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-gh-pages": "^0.5.4"
   },
   "devDependencies": {
     "@babel/core": "^7.13.8",

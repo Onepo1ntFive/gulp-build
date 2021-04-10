@@ -3,21 +3,16 @@
 const gulp = require('gulp'),
     { series, parallel } = gulp,
     babel = require('gulp-babel'),
-    // watch = require('gulp-watch'),
-    prefixer = require('gulp-autoprefixer'),
     uglify = require('gulp-uglify'),
     sass = require('gulp-sass'),
     sourcemaps = require('gulp-sourcemaps'),
     rigger = require('gulp-rigger'),
-    cssmin = require('gulp-minify-css'),
     webp = require('gulp-webp'),
-    pngquant = require('imagemin-pngquant'),
     rimraf = require('rimraf'),
     browserSync = require("browser-sync"),
     reload = browserSync.reload,
-    imagemin = require('gulp-imagemin'),
-    imageresize = require('gulp-image-resize');
-
+    concat = require('gulp-concat'),
+    ghPages = require('gulp-gh-pages');
 
 const path = {
     build: { // пути для файлов после сборки
@@ -29,9 +24,9 @@ const path = {
     },
     src: { // исходные файлы
         html: 'src/*.html',
-        js: 'src/js/main.js',
+        js: ['src/js/libs/**/*.js', 'src/js/**/*.js'],
         style: 'src/style/main.scss',
-        img: 'src/images/**/*.*',
+        img: 'src/img/**/*.*',
         fonts: 'src/fonts/**/*.*'
     },
     watch: { // типы файлов для наблюдения
@@ -44,8 +39,11 @@ const path = {
     clean: './build'
 }
 
+const cleanBuild = (cb) => {
+    return rimraf(path.clean, cb);
+}
 
-// dev task
+// dev tasks
 const server = () => {
     return browserSync
         .init({
@@ -62,7 +60,6 @@ const html = () => {
     return gulp
         .src(path.src.html)
         .pipe(rigger())
-        .pipe(gulp.dest('build'))
         .pipe(gulp.dest(path.build.html))
         .pipe(reload({ stream: true }));
 }
@@ -70,20 +67,44 @@ const html = () => {
 const styles = () => {
     return gulp
         .src(path.src.style)
-        .pipe(sass())
+        .pipe(sourcemaps.init())
+        .pipe(sass({outputStyle: 'compressed'}))
+        .pipe(sourcemaps.write('./maps'))
         .pipe(gulp.dest(path.build.style))
         .pipe(reload({ stream: true }));
 }
 
 const scripts = () => {
-    return gulp.src(path.src.js)
+    return gulp
+        .src(path.src.js)
         .pipe(babel({
             presets: ['@babel/env']
         }))
-        // .pipe(uglify())
-        // .pipe(concat('main.min.js'))
+        .pipe(uglify())
+        .pipe(sourcemaps.init())
+        .pipe(concat('main.js'))
+        .pipe(sourcemaps.write('./maps'))
         .pipe(gulp.dest(path.build.js))
         .pipe(reload({ stream: true }));
+}
+
+const fonts = () => {
+    return gulp
+        .src(path.src.fonts)
+        .pipe(gulp.dest(path.build.fonts))
+}
+
+const imagesWebp = () => {
+    return gulp
+        .src(path.src.img)
+        .pipe(webp({ quality: 80, preset: 'photo' }))
+        .pipe(gulp.dest(path.build.img))
+}
+
+const imagesDev = () => {
+    return gulp
+        .src(path.src.img)
+        .pipe(gulp.dest(path.build.img))
 }
 
 const watch = () => {
@@ -92,37 +113,24 @@ const watch = () => {
     gulp.watch(path.watch.js, scripts)
 }
 
+// help tasks
+exports.imagesDev = series(imagesDev, imagesWebp);
+
 // dev task
 exports.dev = series(
-    parallel(html, styles, scripts),
+    cleanBuild,
+    parallel(html, styles, scripts, fonts, imagesDev, imagesWebp),
     parallel(watch, server)
 )
 
+// deploy
+const deploy = () => {
+    return gulp.src('./build/**/*')
+        .pipe(ghPages());
+}
 
-
-
-// gulp.task('webp', () =>
-//     gulp.src('src/images/**/*.*')
-//         .pipe(webp({ quality: 80, preset: 'photo' }))
-//         .pipe(gulp.dest('./build/images/'))
-// );
-
-// gulp.task('imagemin', () =>
-//     gulp.src('src/images/**/*.*')
-//         .pipe(imagemin({
-//             quality: 80,
-//             optimizationLevel: 6
-//         }))
-//         .pipe(gulp.dest('./build/images/'))
-// );
-
-// gulp.task('imageresize', () =>
-//     gulp.src('src/images/**/*.*')
-//         .pipe(imageresize({
-//             width: 768,
-//             height: 432,
-//             crop : false,
-//             upscale : false
-//         }))
-//         .pipe(gulp.dest('./build/images/'))
-// );
+exports.deploy = series(
+    cleanBuild,
+    parallel(html, styles, scripts, fonts, imagesDev, imagesWebp),
+    parallel(deploy)
+);
