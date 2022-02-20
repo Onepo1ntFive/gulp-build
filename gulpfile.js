@@ -25,7 +25,7 @@ const path = {
     src: { // исходные файлы
         html: 'src/*.html',
         js: ['src/js/libs/**/*.js', 'src/js/**/*.js'],
-        style: 'src/style/main.scss',
+        style: 'src/style/main.sсss',
         img: 'src/img/**/*.*',
         fonts: 'src/fonts/**/*.*'
     },
@@ -48,11 +48,11 @@ const server = () => {
     return browserSync
         .init({
             server: {
-                baseDir: "./build"
+                baseDir: "./dist"
             },
             host: 'localhost',
             port: 9000,
-            logPrefix: "frontend"
+            logPrefix: "dist"
         });
 }
 
@@ -80,7 +80,7 @@ const scripts = () => {
         .pipe(babel({
             presets: ['@babel/env']
         }))
-        .pipe(uglify())
+        // .pipe(uglify())
         .pipe(sourcemaps.init())
         .pipe(concat('main.js'))
         .pipe(sourcemaps.write('./maps'))
@@ -113,14 +113,19 @@ const watch = () => {
     gulp.watch(path.watch.js, scripts)
 }
 
-// help tasks
-exports.imagesDev = series(imagesDev, imagesWebp);
+// helper tasks
+exports.images = series(imagesDev, imagesWebp);
 
 // dev task
 exports.dev = series(
     cleanBuild,
     parallel(html, styles, scripts, fonts, imagesDev, imagesWebp),
     parallel(watch, server)
+)
+// build task
+exports.build = series(
+    cleanBuild,
+    parallel(html, styles, scripts, fonts, imagesDev, imagesWebp)
 )
 
 // deploy

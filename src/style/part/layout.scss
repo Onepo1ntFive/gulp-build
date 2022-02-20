@@ -1,0 +1,43 @@
+.l-wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+    min-height: 100%;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    display: flex;
+    flex-flow: column nowrap;
+}
+/*----------*/
+.l-header {
+    margin: auto;
+    max-width: 1280px;
+    width: 100%;
+
+    @media (min-width: $breakpoint-tablet) {
+    }
+    @media (min-width: $breakpoint-desktop) {
+    }
+}
+/*----------*/
+.l-content {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    flex: 1 auto;
+
+    @media (min-width: $breakpoint-tablet) {
+        padding-top: 5rem;
+        padding-bottom: 5rem;
+    }
+
+    .content__wrap {
+        margin: auto;
+        max-width: 1280px;
+        width: 100%;
+    }
+}
+/*----------*/
+.l-footer {
+}
+/*----------*/
